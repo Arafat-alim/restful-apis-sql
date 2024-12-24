@@ -15,10 +15,22 @@ exports.register = async (req, res) => {
         .status(400)
         .json({ success: false, message: error.details[0].message });
     }
+    const existingUser = await User.getUserByEmail(email);
+    if (existingUser) {
+      return res
+        .status(400)
+        .json({ success: false, message: "User already exists" });
+    }
 
     //! password hashed
-    const hashedPassword = await doHash(password, 10);
-    const user = await User.create({ name, email, password: hashedPassword });
+    const hashedPassword = await doHash(password, 12);
+    //! creating new object for storing data into the db
+    const userObject = {
+      email,
+      name,
+      password: hashedPassword,
+    };
+    const user = await User.create(userObject);
 
     if (user.length !== 0) {
       //! inform user
