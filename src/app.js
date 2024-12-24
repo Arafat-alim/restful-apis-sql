@@ -5,6 +5,8 @@ const helmet = require("helmet");
 const bodyParser = require("body-parser");
 require("dotenv").config();
 
+const authRoutes = require("./routers/authRoutes");
+
 const app = express();
 
 //! middlewares
@@ -15,6 +17,10 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
 //! routers
+app.use("/api/auth", authRoutes);
+app.get("/", (req, res) => {
+  res.status(200).json({ success: true, message: "Server is Live" });
+});
 
 //! handle if routers not found
 
