@@ -47,11 +47,11 @@ knex migrate:latest
 ```
 
 ```bash
-$ knex migrate:latest --env production
+ knex migrate:latest --env production
 
 # or
 
-$ NODE_ENV=production knex migrate:latest
+ NODE_ENV=production knex migrate:latest
 ```
 
 ### How to rollback the last batch of migrations: using the knex cli
@@ -63,35 +63,35 @@ knex migrate:rollback
 ### To rollback all the completed migrations:
 
 ```bash
-$ knex migrate:rollback --all
+ knex migrate:rollback --all
 ```
 
 ### To run the next migration that has not yet been run
 
 ```bash
-$ knex migrate:up
+ knex migrate:up
 ```
 
 ### To run the specified migration that has not yet been run
 
 ```bash
-$ knex migrate:up 001_migration_name.js
+ knex migrate:up 001_migration_name.js
 ```
 
 ### To undo the last migration that was run
 
 ```bash
-$ knex migrate:down
+ knex migrate:down
 ```
 
 ### To undo the specified migration that was run
 
 ```bash
-$ knex migrate:down 001_migration_name.js
+ knex migrate:down 001_migration_name.js
 ```
 
 ### To list both completed and pending migrations:
 
 ```bash
-$ knex migrate:list
+ knex migrate:list
 ```
