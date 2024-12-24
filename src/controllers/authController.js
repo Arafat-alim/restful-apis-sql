@@ -26,7 +26,7 @@ exports.register = async (req, res) => {
         .sendMail({
           to: user[0].email,
           from: process.env.NODE_SENDING_EMAIL_ADDRESS,
-          subject: "",
+          subject: `Welcome ${user[0].name}`,
           html: generateEmailTemplate({
             subject: "Welcome!", //data that will be render on the email template in the ejs file
             headerText: "Welcome!",
