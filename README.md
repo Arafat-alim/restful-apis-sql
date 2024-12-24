@@ -2,19 +2,19 @@
 
 ### Migrations: [knexJs Official Docs](https://knexjs.org/guide/migrations.html#migration-cli)
 
-Install Globally for easily access its command:
+Install `knexjs` Globally for easily access its command:
 
 ```bash
 npm install knex -g
 ```
 
-How to create a migration file using the knex cli. (Please note: install the knex in global for accessing the knex command).
+### How to create a migration file using the knex cli. (Please note: install the knex in global for accessing the knex command).
 
 ```bash
 knex migrate:make migration_name
 ```
 
-Migrations file for creating the "users" table
+### Migrations file for creating the "users" table
 
 ```js
 /**
@@ -40,7 +40,7 @@ exports.down = function (knex) {
 };
 ```
 
-Once you have finished writing the migrations, you can update the database matching your `NODE_ENV` by running:
+### Once you have finished writing the migrations, you can update the database matching your `NODE_ENV` by running:
 
 ```bash
 knex migrate:latest
