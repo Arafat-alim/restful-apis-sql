@@ -196,7 +196,7 @@ exports.sendVerificationCode = async (req, res) => {
     const info = await transport.sendMail({
       from: process.env.NODE_SENDING_EMAIL_ADDRESS,
       to: existingUser.email,
-      subject: "",
+      subject: "Email Verification Code",
       html: generateVerificationEmail(token, existingUser.name),
     });
 
@@ -400,6 +400,13 @@ exports.verifyForgotPasswordCode = async (req, res) => {
     }
 
     if (
+      Date.now() - existingUser.forgotPasswordCodeValidation >
+      5 * 60 * 1000
+    ) {
+      return res.status(403).json({ success: false, message: "Code expired" });
+    }
+
+    if (
       !existingUser.forgotPasswordCode ||
       !existingUser.forgotPasswordCodeValidation
     ) {
@@ -408,13 +415,6 @@ exports.verifyForgotPasswordCode = async (req, res) => {
         message:
           "Something went wrong with the forgot password code or forgot password code validation",
       });
-    }
-
-    if (
-      Date.now() - existingUser.forgotPasswordCodeValidation >
-      5 * 60 * 1000
-    ) {
-      return res.status(403).json({ success: false, message: "Code expired" });
     }
 
     const hashedCodeValue = await hmacProcess(
@@ -432,7 +432,7 @@ exports.verifyForgotPasswordCode = async (req, res) => {
       if (updateDb) {
         return res.status(201).json({
           success: true,
-          message: "Congratulations! Your new password has been updaated!",
+          message: "Congratulations! Your new password has been updated!",
         });
       } else {
         return res.status(403).json({
@@ -449,5 +449,40 @@ exports.verifyForgotPasswordCode = async (req, res) => {
       err
     );
     res.status(500).json({ success: false, message: "Unexpected occur" });
+  }
+};
+
+exports.deleteUser = async (req, res) => {
+  const { email } = req.body;
+  const { error, value } = await validateEmailSchema.validate({ email });
+
+  if (error) {
+    return res
+      .status(400)
+      .json({ success: false, message: error.details[0].message });
+  }
+
+  try {
+    const existingUser = await User.getUserByEmail(email);
+    if (!existingUser) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User does not exist" });
+    } else {
+      const updatedDb = await User.deleteUserByEmail(existingUser.email);
+
+      if (updatedDb) {
+        return res
+          .status(201)
+          .json({ success: true, message: "User deleted successfully" });
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: "Deletion operation has been failed, please try again",
+        });
+      }
+    }
+  } catch (err) {
+    console.log("Something went wrong with Delete User controller: ", err);
   }
 };

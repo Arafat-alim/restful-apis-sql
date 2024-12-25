@@ -47,6 +47,12 @@ class User {
       forgotPasswordCodeValidation: null,
     });
   }
+
+  static async deleteUserByEmail(email) {
+    return db("users").where({ email }).update({
+      deletedUser: true,
+    });
+  }
 }
 
 module.exports = User;
