@@ -8,7 +8,9 @@
     "migrate:make": "knex migrate:make",
     "migrate:latest": "knex migrate:latest",
     "migrate:rollback": "knex migrate:rollback",
-    "migrate:status": "knex migrate:status"
+    "migrate:status": "knex migrate:status",
+    "migrate:prod": "knex migrate:latest --env=production",
+    "rollback:prod": "knex migrate:rollback --env=production"
   },
   "keywords": [],
   "author": "",
