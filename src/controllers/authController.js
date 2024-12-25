@@ -162,3 +162,10 @@ exports.login = async (req, res) => {
     });
   }
 };
+
+exports.logout = async (req, res) => {
+  res
+    .clearCookie("Authorization")
+    .status(200)
+    .json({ success: true, message: "Logout successfully" });
+};
