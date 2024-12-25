@@ -11,3 +11,7 @@ exports.registerSchema = Joi.object({
   password: Joi.string().min(4).max(20).required().alphanum(),
   name: Joi.string().min(4).max(50).required(),
 });
+
+exports.userByIdSchema = Joi.object({
+  id: Joi.number().required().min(1).max(100),
+});

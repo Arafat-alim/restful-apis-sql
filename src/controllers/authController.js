@@ -1,4 +1,4 @@
-const { registerSchema } = require("../middlewares/validator");
+const { registerSchema, userByIdSchema } = require("../middlewares/validator");
 const { doHash } = require("../utils/hashing");
 const User = require("../models/User");
 const transport = require("../middlewares/sendMail");
@@ -58,5 +58,50 @@ exports.register = async (req, res) => {
       .json({ success: true, message: "User Created", result: user[0] });
   } catch (err) {
     console.log("Something went wrong with the auth controller", err);
+  }
+};
+
+exports.getUsers = async (req, res) => {
+  try {
+    const users = await User.getAllUsers();
+    return res
+      .status(200)
+      .json({ success: true, message: "Users Fetched.", result: users });
+  } catch (err) {
+    console.log("Something went wrong with get all users api: ", err);
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong. Please ask developer to check",
+    });
+  }
+};
+
+exports.getUserByID = async (req, res) => {
+  const { id } = req.query;
+
+  const { error, value } = userByIdSchema.validate({ id });
+
+  if (error) {
+    return res
+      .status(400)
+      .json({ success: false, message: error.details[0].message });
+  }
+
+  try {
+    const existingUser = await User.getUserById(id);
+    if (!existingUser) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User does not exist" });
+    }
+    res
+      .status(200)
+      .json({ success: true, message: "User found", result: existingUser });
+  } catch (err) {
+    console.log("Something went wrong with get all users api: ", err);
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong. Please ask developer to check",
+    });
   }
 };
