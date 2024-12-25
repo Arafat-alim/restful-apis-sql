@@ -1,4 +1,5 @@
 const db = require("../config/db");
+const { sendVerificationCode } = require("../controllers/authController");
 
 class User {
   static async create(user) {
@@ -15,6 +16,13 @@ class User {
 
   static async getUserById(id) {
     return db("users").where({ id, deletedUser: false }).first();
+  }
+
+  static async updateSendVerificationCode(email, hashedCodeValue) {
+    return db("users").where({ email }).update({
+      verificationCode: hashedCodeValue,
+      verificationCodeValidation: Date.now(),
+    });
   }
 }
 

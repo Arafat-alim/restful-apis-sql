@@ -2,13 +2,15 @@ const {
   registerSchema,
   userByIdSchema,
   loginSchema,
+  sendVerificationCodeSchema,
 } = require("../middlewares/validator");
-const { doHash, doHashValidation } = require("../utils/hashing");
+const { doHash, doHashValidation, hmacProcess } = require("../utils/hashing");
 const User = require("../models/User");
 const transport = require("../middlewares/sendMail");
 const generateEmailTemplate = require("../utils/generateEmailTemplate");
 const generateSecretKey = require("../utils/generateSecretKey ");
 const { generateToken } = require("../utils/generateToken");
+const generateVerificationEmail = require("../utils/generateVerificationEmail");
 
 exports.register = async (req, res) => {
   const { name, email, password } = req.body;
@@ -168,4 +170,54 @@ exports.logout = async (req, res) => {
     .clearCookie("Authorization")
     .status(200)
     .json({ success: true, message: "Logout successfully" });
+};
+
+exports.sendVerificationCode = async (req, res) => {
+  const { email } = req.body;
+  const { error, value } = await sendVerificationCodeSchema.validate({ email });
+  if (error) {
+    return res
+      .status(400)
+      .json({ success: false, message: error.details[0].message });
+  }
+  try {
+    const existingUser = await User.getUserByEmail(email);
+    if (!existingUser) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User does not exists" });
+    }
+
+    //! otp
+    const token = Math.floor(Math.random() * 1000000).toString();
+
+    const info = await transport.sendMail({
+      from: process.env.NODE_SENDING_EMAIL_ADDRESS,
+      to: existingUser.email,
+      subject: "",
+      html: generateVerificationEmail(token, existingUser.name),
+    });
+
+    if (info.accepted[0] === existingUser.email) {
+      //! create hmac process
+      const hashedCodeValue = await hmacProcess(token, process.env.JWT_SECRET);
+      const updateDB = await User.updateSendVerificationCode(
+        existingUser.email,
+        hashedCodeValue
+      );
+      console.log("updateDB", updateDB);
+
+      if (updateDB) {
+        return res
+          .status(201)
+          .json({ success: true, message: "Code has been sent" });
+      }
+    }
+  } catch (err) {
+    console.log("Something went wrong with Send verification code: ", err);
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong, please report to developers",
+    });
+  }
 };

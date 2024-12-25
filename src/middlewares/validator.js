@@ -26,3 +26,11 @@ exports.loginSchema = Joi.object({
     }),
   password: Joi.string().min(5).max(50).required().alphanum(),
 });
+
+exports.sendVerificationCodeSchema = Joi.object({
+  email: Joi.string()
+    .email({ tlds: { allow: ["com", "net"] } })
+    .required()
+    .min(4)
+    .max(50),
+});

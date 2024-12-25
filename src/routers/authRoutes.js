@@ -5,6 +5,7 @@ const {
   getUserByID,
   login,
   logout,
+  sendVerificationCode,
 } = require("../controllers/authController");
 
 const router = express.Router();
@@ -14,5 +15,7 @@ router.get("/users", getUsers);
 router.get("/user", getUserByID);
 router.post("/login", login);
 router.post("/logout", logout);
+
+router.patch("/send-verification-code", sendVerificationCode);
 
 module.exports = router;
