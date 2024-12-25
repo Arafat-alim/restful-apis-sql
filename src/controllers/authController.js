@@ -1,8 +1,14 @@
-const { registerSchema, userByIdSchema } = require("../middlewares/validator");
-const { doHash } = require("../utils/hashing");
+const {
+  registerSchema,
+  userByIdSchema,
+  loginSchema,
+} = require("../middlewares/validator");
+const { doHash, doHashValidation } = require("../utils/hashing");
 const User = require("../models/User");
 const transport = require("../middlewares/sendMail");
 const generateEmailTemplate = require("../utils/generateEmailTemplate");
+const generateSecretKey = require("../utils/generateSecretKey ");
+const { generateToken } = require("../utils/generateToken");
 
 exports.register = async (req, res) => {
   const { name, email, password } = req.body;
@@ -107,6 +113,52 @@ exports.getUserByID = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Something went wrong. Please ask developer to check",
+    });
+  }
+};
+
+exports.login = async (req, res) => {
+  const { email, password } = req.body;
+  const { error, value } = loginSchema.validate({ email, password });
+
+  if (error) {
+    return res
+      .status(400)
+      .json({ success: false, message: error.details[0].message });
+  }
+  try {
+    //! find email in the db
+    const existingUser = await User.getUserByEmail(email);
+    const comparedPassword = await doHashValidation(
+      password,
+      existingUser.password
+    );
+    if (!existingUser || !comparedPassword) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Invalid Credentials" });
+    }
+
+    //! generate jwt token
+    const token = await generateToken({
+      verified: existingUser.verified,
+      email: existingUser.email,
+      userId: existingUser.id,
+    });
+
+    //! Implementing the cookie
+    res
+      .cookie("Authorization", "Bearer " + token, {
+        expires: new Date(Date.now() + 8 * 360000),
+        httpOnly: process.env.NODE_ENV === "production",
+        secure: process.env.NODE_ENV === "production",
+      })
+      .json({ success: true, token, message: "LoggedIn Successfully" });
+  } catch (err) {
+    console.log("Something went wrong with login controller: ", err);
+    res.status(400).json({
+      success: false,
+      message: "Something went wrong. Please report to developer to check",
     });
   }
 };

@@ -15,3 +15,14 @@ exports.registerSchema = Joi.object({
 exports.userByIdSchema = Joi.object({
   id: Joi.number().required().min(1).max(100),
 });
+
+exports.loginSchema = Joi.object({
+  email: Joi.string()
+    .min(4)
+    .max(50)
+    .required()
+    .email({
+      tlds: { allow: ["com", "net"] },
+    }),
+  password: Joi.string().min(5).max(50).required().alphanum(),
+});
