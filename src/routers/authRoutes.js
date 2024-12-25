@@ -6,6 +6,7 @@ const {
   login,
   logout,
   sendVerificationCode,
+  verifyEmailVerificationCode,
 } = require("../controllers/authController");
 
 const router = express.Router();
@@ -17,5 +18,6 @@ router.post("/login", login);
 router.post("/logout", logout);
 
 router.patch("/send-verification-code", sendVerificationCode);
+router.patch("/verify-verification-code", verifyEmailVerificationCode);
 
 module.exports = router;

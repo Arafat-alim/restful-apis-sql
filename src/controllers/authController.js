@@ -3,6 +3,7 @@ const {
   userByIdSchema,
   loginSchema,
   sendVerificationCodeSchema,
+  acceptCodeSchema,
 } = require("../middlewares/validator");
 const { doHash, doHashValidation, hmacProcess } = require("../utils/hashing");
 const User = require("../models/User");
@@ -218,6 +219,89 @@ exports.sendVerificationCode = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Something went wrong, please report to developers",
+    });
+  }
+};
+
+exports.verifyEmailVerificationCode = async (req, res) => {
+  const { email, providedCode } = req.body;
+
+  const { error, value } = await acceptCodeSchema.validate({
+    email,
+    providedCode,
+  });
+
+  if (error) {
+    return res
+      .status(400)
+      .json({ success: false, message: error.details[0].message });
+  }
+
+  try {
+    const codeValue = providedCode.toString();
+    const existingUser = await User.getUserByEmail(email);
+    if (!existingUser) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User does not found" });
+    }
+
+    //! check user is not verified
+    if (existingUser.verified) {
+      return res
+        .status(400)
+        .json({ success: false, message: "User already verified" });
+    }
+
+    if (
+      !existingUser.verificationCodeValidation ||
+      !existingUser.verificationCode
+    ) {
+      return res.status(401).json({
+        success: false,
+        message:
+          "Something went wrong with the verification code or verification code validation",
+      });
+    }
+
+    //! Time expiration check
+    if (Date.now() - existingUser.verificationCodeValidation > 5 * 60 * 1000) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Code has been expired" });
+    }
+
+    const hashedCodeValue = await hmacProcess(
+      codeValue,
+      process.env.JWT_SECRET
+    );
+
+    console.log(hashedCodeValue);
+    console.log(existingUser.email);
+
+    if (hashedCodeValue === existingUser.verificationCode) {
+      const updateDB = await User.updateVerification(existingUser.email, true);
+      if (updateDB) {
+        return res.status(201).json({
+          success: true,
+          message: "Your email has been verified successfully!",
+        });
+      } else {
+        return res
+          .status(400)
+          .json({ success: false, message: "Updation failed" });
+      }
+    }
+
+    res.status(401).json({ success: false, message: "Verification Failed" });
+  } catch (err) {
+    console.log(
+      "Something went wrong with Verify email verification code: ",
+      err
+    );
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong, please report to developer",
     });
   }
 };

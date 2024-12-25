@@ -24,6 +24,15 @@ class User {
       verificationCodeValidation: Date.now(),
     });
   }
+
+  static async updateVerification(email, value) {
+    console.log(email, value);
+    return db("users").where({ email }).update({
+      verified: value,
+      verificationCode: null,
+      verificationCodeValidation: null,
+    });
+  }
 }
 
 module.exports = User;

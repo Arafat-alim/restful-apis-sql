@@ -34,3 +34,16 @@ exports.sendVerificationCodeSchema = Joi.object({
     .min(4)
     .max(50),
 });
+
+exports.acceptCodeSchema = Joi.object({
+  email: Joi.string()
+    .min(4)
+    .max(50)
+    .email({
+      tlds: { allow: ["com", "net"] },
+    })
+    .required()
+    .required(),
+
+  providedCode: Joi.string().length(6).required(),
+});
