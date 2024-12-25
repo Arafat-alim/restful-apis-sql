@@ -7,7 +7,9 @@ const {
   logout,
   sendVerificationCode,
   verifyEmailVerificationCode,
+  forgotPasswordCode,
 } = require("../controllers/authController");
+const { identifier } = require("../middlewares/identification");
 
 const router = express.Router();
 
@@ -19,5 +21,6 @@ router.post("/logout", logout);
 
 router.patch("/send-verification-code", sendVerificationCode);
 router.patch("/verify-verification-code", verifyEmailVerificationCode);
+router.patch("/send-forgot-password-code", identifier, forgotPasswordCode);
 
 module.exports = router;

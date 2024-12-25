@@ -26,11 +26,19 @@ class User {
   }
 
   static async updateVerification(email, value) {
-    console.log(email, value);
     return db("users").where({ email }).update({
       verified: value,
       verificationCode: null,
       verificationCodeValidation: null,
+    });
+  }
+
+  static async updateForgotPasswordCode(email, hashedCodeValue) {
+    console.log(email);
+    console.log(hashedCodeValue);
+    return db("users").where({ email }).update({
+      forgotPasswordCode: hashedCodeValue,
+      forgotPasswordCodeValidation: Date.now(),
     });
   }
 }

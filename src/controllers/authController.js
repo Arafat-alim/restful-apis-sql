@@ -2,7 +2,7 @@ const {
   registerSchema,
   userByIdSchema,
   loginSchema,
-  sendVerificationCodeSchema,
+  validateEmailSchema,
   acceptCodeSchema,
 } = require("../middlewares/validator");
 const { doHash, doHashValidation, hmacProcess } = require("../utils/hashing");
@@ -175,7 +175,7 @@ exports.logout = async (req, res) => {
 
 exports.sendVerificationCode = async (req, res) => {
   const { email } = req.body;
-  const { error, value } = await sendVerificationCodeSchema.validate({ email });
+  const { error, value } = await validateEmailSchema.validate({ email });
   if (error) {
     return res
       .status(400)
@@ -302,6 +302,83 @@ exports.verifyEmailVerificationCode = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Something went wrong, please report to developer",
+    });
+  }
+};
+
+exports.forgotPasswordCode = async (req, res) => {
+  const { email } = req.body;
+  const { error, value } = await validateEmailSchema.validate({ email });
+
+  if (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.details[0].message,
+    });
+  }
+
+  try {
+    //! find user using email
+    const existingUser = await User.getUserByEmail(email);
+    if (!existingUser) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User does not exists" });
+    }
+
+    // if (!existingUser.verified) {
+    //   return res
+    //     .status(403)
+    //     .json({ success: false, message: "User is not verified" });
+    // }
+
+    const codeValue = Math.floor(Math.random() * 1000000).toString();
+    console.log(codeValue);
+
+    const info = await transport.sendMail({
+      from: process.env.NODE_SENDING_EMAIL_ADDRESS,
+      to: existingUser.email,
+      subject: "Reset Your Password",
+      html: generateEmailTemplate({
+        subject: "Reset Your Password",
+        headerText: "Password Reset Request",
+        bodyText:
+          "It seems like you requested a password reset. Please use the verification code below to complete the process.",
+        actionText: null,
+        actionUrl: null,
+        verificationCode: `${codeValue}`,
+      }),
+    });
+
+    if (info.accepted[0] === existingUser.email) {
+      const hashedCodeValue = await hmacProcess(
+        codeValue,
+        process.env.JWT_SECRET
+      );
+
+      const updateDB = await User.updateForgotPasswordCode(
+        existingUser.email,
+        hashedCodeValue
+      );
+
+      console.log(updateDB);
+
+      if (updateDB) {
+        return res
+          .status(201)
+          .json({ success: true, message: "Forgot Password Code Sent" });
+      } else {
+        return res.status(402).json({
+          success: false,
+          message: "Sending Forgot Password Code was failed",
+        });
+      }
+    }
+  } catch (err) {
+    console.log("Something went wrong with the forgot passsword code: ", err);
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong. Please report to devs",
     });
   }
 };
