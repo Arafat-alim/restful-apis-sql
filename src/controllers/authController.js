@@ -64,6 +64,11 @@ exports.register = async (req, res) => {
 exports.getUsers = async (req, res) => {
   try {
     const users = await User.getAllUsers();
+    if (users.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No Users found" });
+    }
     return res
       .status(200)
       .json({ success: true, message: "Users Fetched.", result: users });
