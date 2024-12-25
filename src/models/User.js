@@ -34,11 +34,17 @@ class User {
   }
 
   static async updateForgotPasswordCode(email, hashedCodeValue) {
-    console.log(email);
-    console.log(hashedCodeValue);
     return db("users").where({ email }).update({
       forgotPasswordCode: hashedCodeValue,
       forgotPasswordCodeValidation: Date.now(),
+    });
+  }
+
+  static async updateSuccessForgotPasswordEvent(email, newPassword) {
+    return db("users").where({ email }).update({
+      password: newPassword,
+      forgotPasswordCode: null,
+      forgotPasswordCodeValidation: null,
     });
   }
 }

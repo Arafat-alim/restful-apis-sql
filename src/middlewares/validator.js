@@ -47,3 +47,17 @@ exports.acceptCodeSchema = Joi.object({
 
   providedCode: Joi.string().length(6).required(),
 });
+
+exports.changePasswordSchema = Joi.object({
+  email: Joi.string()
+    .min(4)
+    .max(50)
+    .email({
+      tlds: { allow: ["com", "net"] },
+    })
+    .required()
+    .required(),
+
+  providedCode: Joi.string().length(6).required(),
+  newPassword: Joi.string().min(4).max(20).required().alphanum(),
+});

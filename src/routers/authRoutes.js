@@ -8,6 +8,7 @@ const {
   sendVerificationCode,
   verifyEmailVerificationCode,
   forgotPasswordCode,
+  verifyForgotPasswordCode,
 } = require("../controllers/authController");
 const { identifier } = require("../middlewares/identification");
 
@@ -22,5 +23,10 @@ router.post("/logout", logout);
 router.patch("/send-verification-code", sendVerificationCode);
 router.patch("/verify-verification-code", verifyEmailVerificationCode);
 router.patch("/send-forgot-password-code", identifier, forgotPasswordCode);
+router.patch(
+  "/verify-forgot-password-code",
+  identifier,
+  verifyForgotPasswordCode
+);
 
 module.exports = router;

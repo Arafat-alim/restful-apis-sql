@@ -4,6 +4,7 @@ const {
   loginSchema,
   validateEmailSchema,
   acceptCodeSchema,
+  changePasswordSchema,
 } = require("../middlewares/validator");
 const { doHash, doHashValidation, hmacProcess } = require("../utils/hashing");
 const User = require("../models/User");
@@ -206,7 +207,6 @@ exports.sendVerificationCode = async (req, res) => {
         existingUser.email,
         hashedCodeValue
       );
-      console.log("updateDB", updateDB);
 
       if (updateDB) {
         return res
@@ -246,7 +246,7 @@ exports.verifyEmailVerificationCode = async (req, res) => {
         .json({ success: false, message: "User does not found" });
     }
 
-    //! check user is not verified
+    //! check user is verified
     if (existingUser.verified) {
       return res
         .status(400)
@@ -275,9 +275,6 @@ exports.verifyEmailVerificationCode = async (req, res) => {
       codeValue,
       process.env.JWT_SECRET
     );
-
-    console.log(hashedCodeValue);
-    console.log(existingUser.email);
 
     if (hashedCodeValue === existingUser.verificationCode) {
       const updateDB = await User.updateVerification(existingUser.email, true);
@@ -333,7 +330,6 @@ exports.forgotPasswordCode = async (req, res) => {
     // }
 
     const codeValue = Math.floor(Math.random() * 1000000).toString();
-    console.log(codeValue);
 
     const info = await transport.sendMail({
       from: process.env.NODE_SENDING_EMAIL_ADDRESS,
@@ -361,14 +357,12 @@ exports.forgotPasswordCode = async (req, res) => {
         hashedCodeValue
       );
 
-      console.log(updateDB);
-
       if (updateDB) {
         return res
           .status(201)
           .json({ success: true, message: "Forgot Password Code Sent" });
       } else {
-        return res.status(402).json({
+        return res.status(403).json({
           success: false,
           message: "Sending Forgot Password Code was failed",
         });
@@ -380,5 +374,80 @@ exports.forgotPasswordCode = async (req, res) => {
       success: false,
       message: "Something went wrong. Please report to devs",
     });
+  }
+};
+
+exports.verifyForgotPasswordCode = async (req, res) => {
+  const { email, providedCode, newPassword } = req.body;
+  const { error, value } = await changePasswordSchema.validate({
+    email,
+    providedCode,
+    newPassword,
+  });
+
+  if (error) {
+    return res
+      .status(403)
+      .json({ success: false, message: error.details[0].message });
+  }
+  try {
+    const existingUser = await User.getUserByEmail(email);
+    const codeValue = providedCode.toString();
+    if (!existingUser) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User does not found" });
+    }
+
+    if (
+      !existingUser.forgotPasswordCode ||
+      !existingUser.forgotPasswordCodeValidation
+    ) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Something went wrong with the forgot password code or forgot password code validation",
+      });
+    }
+
+    if (
+      Date.now() - existingUser.forgotPasswordCodeValidation >
+      5 * 60 * 1000
+    ) {
+      return res.status(403).json({ success: false, message: "Code expired" });
+    }
+
+    const hashedCodeValue = await hmacProcess(
+      codeValue,
+      process.env.JWT_SECRET
+    );
+
+    const hashedNewPassword = await doHash(newPassword, 12);
+
+    if (hashedCodeValue === existingUser.forgotPasswordCode) {
+      const updateDb = await User.updateSuccessForgotPasswordEvent(
+        email,
+        hashedNewPassword
+      );
+      if (updateDb) {
+        return res.status(201).json({
+          success: true,
+          message: "Congratulations! Your new password has been updaated!",
+        });
+      } else {
+        return res.status(403).json({
+          success: false,
+          message: "Failed to update your new Password. Please try again",
+        });
+      }
+    } else {
+      return res.status(400).json({ success: false, message: "Invalid Code" });
+    }
+  } catch (err) {
+    console.log(
+      "Something went wrong with verify forgot passsword code: ",
+      err
+    );
+    res.status(500).json({ success: false, message: "Unexpected occur" });
   }
 };
