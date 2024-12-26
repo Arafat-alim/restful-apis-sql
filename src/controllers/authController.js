@@ -138,11 +138,17 @@ exports.login = async (req, res) => {
   try {
     //! find email in the db
     const existingUser = await User.getUserByEmail(email);
+    if (!existingUser) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User does not exist." });
+    }
+
     const comparedPassword = await doHashValidation(
       password,
       existingUser.password
     );
-    if (!existingUser || !comparedPassword) {
+    if (!comparedPassword) {
       return res
         .status(404)
         .json({ success: false, message: "Invalid Credentials" });
