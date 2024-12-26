@@ -163,6 +163,7 @@ exports.login = async (req, res) => {
     res.status(400).json({
       success: false,
       message: "Something went wrong. Please report to developer to check",
+      error: err,
     });
   }
 };
