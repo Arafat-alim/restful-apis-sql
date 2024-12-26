@@ -13,7 +13,8 @@
     "migrate:rollback": "knex migrate:rollback",
     "migrate:status": "knex migrate:status",
     "migrate:prod": "knex migrate:latest --env=production",
-    "rollback:prod": "knex migrate:rollback --env=production"
+    "rollback:prod": "knex migrate:rollback --env=production",
+    "vercel-build": "echo Hello"
   },
   "keywords": [],
   "author": "",
