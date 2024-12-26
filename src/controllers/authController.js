@@ -68,6 +68,11 @@ exports.register = async (req, res) => {
       .json({ success: true, message: "User Created", result: user[0] });
   } catch (err) {
     console.log("Something went wrong with the auth controller", err);
+    res.status(503).json({
+      success: false,
+      message: "Something went wrong, pleaase report to devs.",
+      error: err,
+    });
   }
 };
 
